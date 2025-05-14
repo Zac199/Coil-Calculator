@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coil Calculator</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
+    h1 { text-align: center; color: #00d1b2; }
+    .container { max-width: 700px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    input, select { width: 100%; padding: 10px; margin-top: 4px; margin-bottom: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 5px; color: #fff; }
+    input:focus, select:focus { outline: none; border-color: #00d1b2; }
+    .output { background: #262626; padding: 15px; margin-top: 20px; border-radius: 8px; border: 1px solid #333; }
+    button { width: 100%; padding: 12px; background-color: #00d1b2; color: #000; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+    button:hover { background-color: #00bfa5; }
+    .svg-container { margin-top: 20px; text-align: center; }
+    svg { background-color: #1e1e1e; border: 1px solid #444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Coil Calculator</h1>
+    <label><input type="checkbox" id="acdc" style="width:auto; display:inline-block;"/> Use AC (uncheck for DC)</label>
+    <label for="material">Wire Material:</label>
+    <select id="material">
+      <option value="1.68e-8">Copper</option>
+      <option value="2.65e-8">Aluminum</option>
+      <option value="5.6e-8">Nickel</option>
+      <option value="2.44e-8">Gold</option>
+      <option value="1.59e-8">Silver</option>
+      <option value="1.10e-6">NiChrome</option>
+    </select>
+    <label for="unit">Select Unit:</label>
+    <select id="unit">
+      <option value="awg">AWG</option>
+      <option value="mm">mm</option>
+    </select>
+    <label for="wireSize">Wire Diameter (mm):</label>
+    <select id="wireSize">
+      <option value="0.1">0.1 mm</option>
+      <option value="0.2">0.2 mm</option>
+      <option value="0.3">0.3 mm</option>
+      <option value="0.4">0.4 mm</option>
+      <option value="0.5">0.5 mm</option>
+      <option value="0.6">0.6 mm</option>
+      <option value="0.7">0.7 mm</option>
+      <option value="0.8">0.8 mm</option>
+    </select>
+    <label for="core">Core Type:</label>
+    <select id="core">
+      <option value="air">Air</option>
+      <option value="ferrite">Ferrite</option>
+      <option value="iron">Iron</option>
+      <option value="steel">Steel</option>
+    </select>
+    <label for="turnLength">Turn Length (cm):</label>
+    <input type="number" id="turnLength" value="6"/>
+    <label for="desiredResistance">Desired Full Coil Resistance (Ω):</label>
+    <input type="number" id="desiredResistance" value="5"/>
+    <label for="centerTapResistance">Center Tap Resistance (Ω):</label>
+    <input type="number" id="centerTapResistance" value="2.5"/>
+    <button onclick="calculate()">Calculate</button>
+    <div class="output" id="output"></div>
+    <div class="svg-container">
+      <svg id="coilVisual" width="300" height="300"></svg>
+    </div>
+  </div>
+  <script>
+    function calculate() {
+      const resistivity = parseFloat(document.getElementById("material").value);
+      const diameter = parseFloat(document.getElementById("wireSize").value);
+      const turnLength_cm = parseFloat(document.getElementById("turnLength").value);
+      const R_target = parseFloat(document.getElementById("desiredResistance").value);
+      const R_center = parseFloat(document.getElementById("centerTapResistance").value);
+      const wireDiameter_m = diameter / 1000;
+      const wireArea = Math.PI * Math.pow(wireDiameter_m / 2, 2);
+      const turnLength_m = turnLength_cm / 100;
+      const totalLength = (R_target * wireArea) / resistivity;
+      const totalTurns = totalLength / turnLength_m;
+      const centerLength = (R_center * wireArea) / resistivity;
+      const centerTurns = centerLength / turnLength_m;
+      let output = `<strong>Total Turns for Full Coil:</strong> ${totalTurns.toFixed(0)} turns<br>`;
+      output += `<strong>Total Wire Length:</strong> ${totalLength.toFixed(2)} m<br>`;
+      output += `<strong>Turns for Center Tap:</strong> ${centerTurns.toFixed(0)} turns<br>`;
+      output += `<strong>Center Tap Wire Length:</strong> ${centerLength.toFixed(2)} m<br>`;
+      document.getElementById("output").innerHTML = output;
+      drawCoil(totalTurns, diameter);
+    }
+    function drawCoil(turns, diameter_mm) {
+      const svg = document.getElementById("coilVisual");
+      svg.innerHTML = '';
+      const spacing = diameter_mm * 1.2;
+      const width = svg.getAttribute('width');
+      const centerX = width / 2;
+      for (let i = 0; i < Math.min(turns, 100); i++) {
+        const ellipse = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+        ellipse.setAttribute("cx", centerX);
+        ellipse.setAttribute("cy", 10 + i * spacing);
+        ellipse.setAttribute("rx", 60);
+        ellipse.setAttribute("ry", diameter_mm * 1.5);
+        ellipse.setAttribute("stroke", "#00d1b2");
+        ellipse.setAttribute("fill", "none");
+        ellipse.setAttribute("stroke-width", 1);
+        svg.appendChild(ellipse);
+      }
+    }
+  </script>
+</body>
+</html>
